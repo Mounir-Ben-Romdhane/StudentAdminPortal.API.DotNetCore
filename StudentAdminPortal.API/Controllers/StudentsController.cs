@@ -1,8 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using StudentAdminPortal.API.DataModels;
-using StudentAdminPortal.API.DomainModels;
-using StudentAdminPortal.API.Repositories;
+
 
 namespace StudentAdminPortal.API.Controllers
 {
@@ -12,7 +11,7 @@ namespace StudentAdminPortal.API.Controllers
         private readonly IUnitOfWork uow;
 
         //private readonly IStudentRepository studentRepository;
-        //private readonly IMapper mapper;
+        private readonly IMapper mapper;
 
 
         //public StudentsController(IStudentRepository studentRepository,
@@ -22,9 +21,11 @@ namespace StudentAdminPortal.API.Controllers
         //    this.mapper = mapper;
         //}
 
-        public StudentsController(IUnitOfWork uow)
+        public StudentsController(IUnitOfWork uow,
+            IMapper mapper)
         {
             this.uow = uow;
+            this.mapper = mapper;
         }
 
         [HttpGet]
@@ -33,7 +34,23 @@ namespace StudentAdminPortal.API.Controllers
         {
             var students = await uow.StudentRepository.GetStudentsAsync();
 
-           return Ok(students);
+           return Ok(mapper.Map<List<DomainModels.Student>>(students));
         }
+
+        [HttpGet]
+        [Route("[controller]/{studentId:guid}")]
+        public async Task<IActionResult> GetStudentAsync([FromRoute] Guid studentId)
+        {
+            //Fetch student details
+
+            var student = await uow.StudentRepository.GetStudentAsync(studentId);
+
+            if (student == null)
+            { 
+                return NotFound();
+            }
+            //Return student
+            return Ok(mapper.Map<DomainModels.Student>(student));
+        }   
     }
 }

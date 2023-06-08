@@ -11,7 +11,7 @@ namespace StudentAdminPortal.API.DataModels
     
         private readonly StudentAdminContext _context;
         public UnitOfWork(StudentAdminContext context)
-    {
+        {
             _context = context;
             
         }
