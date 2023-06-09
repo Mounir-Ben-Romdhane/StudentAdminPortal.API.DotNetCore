@@ -38,7 +38,7 @@ namespace StudentAdminPortal.API.Controllers
         }
 
         [HttpGet]
-        [Route("[controller]/{studentId:guid}")]
+        [Route("[controller]/{studentId:guid}"),ActionName("GetStudentAsync")]
         public async Task<IActionResult> GetStudentAsync([FromRoute] Guid studentId)
         {
             //Fetch student details
@@ -96,5 +96,17 @@ namespace StudentAdminPortal.API.Controllers
 
         }
 
+        [HttpPost]
+        [Route("[controller]/Add")]
+        public async Task<IActionResult> AddStudentAsync([FromBody] AddStudentRequest request)
+        {
+            //Add student
+            var student = await uow.StudentRepository.AddStudentAsync(mapper.Map<DataModels.Student>(request));
+
+            //Return student
+            return CreatedAtAction(nameof(GetStudentAsync), new { studentId = student.Id }, mapper.Map<DomainModels.Student>(student));
+            
+        }
+    
     }
 }

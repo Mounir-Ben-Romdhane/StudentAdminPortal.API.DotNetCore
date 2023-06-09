@@ -13,6 +13,8 @@ namespace StudentAdminPortal.API.Profiles
             CreateMap<DataModels.Address, DomainModels.Address>().ReverseMap();
             CreateMap<UpdateStudentRequet, DataModels.Student>()
                 .AfterMap<UpdateStudentRequestAfterMap>();
+            CreateMap<AddStudentRequest, DataModels.Student>()
+                .AfterMap<AddStudentRequestAfterMap>();
         }
     }
 }
