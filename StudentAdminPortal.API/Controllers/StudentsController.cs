@@ -112,23 +112,40 @@ namespace StudentAdminPortal.API.Controllers
         [Route("[controller]/{studentId:guid}/upload-image")]
         public async Task<IActionResult> UploadImage([FromRoute] Guid studentId, IFormFile profileImage)
         {
-            //Check user exist
-            if (await uow.StudentRepository.Exist(studentId))
+            var validExtensions = new List<string>
             {
-                //Generate file name
-                var fileName = Guid.NewGuid().ToString() + Path.GetExtension(profileImage.FileName);
-                //Upload image to local storage
-                var fileImagePath = await uow.ImageRepository.Upload(profileImage,fileName);
-                //Update profil image path to the database
-                if (await uow.StudentRepository.UpdateProfileImage(studentId, fileImagePath))
-                {
-                    //Return image path
-                    return Ok(fileImagePath);
-                }
-                return StatusCode(StatusCodes.Status500InternalServerError, "Error while uploading image");
+                ".jpeg",
+                ".png",
+                ".gif",
+                ".jpg"
+            };
 
-                    
+            if(profileImage != null && profileImage.Length > 0 )
+            {
+                var extension = Path.GetExtension(profileImage.FileName);
+               if( validExtensions.Contains(extension) )
+                {
+                    //Check user exist
+                    if (await uow.StudentRepository.Exist(studentId))
+                    {
+                        //Generate file name
+                        var fileName = Guid.NewGuid().ToString() + Path.GetExtension(profileImage.FileName);
+                        //Upload image to local storage
+                        var fileImagePath = await uow.ImageRepository.Upload(profileImage, fileName);
+                        //Update profil image path to the database
+                        if (await uow.StudentRepository.UpdateProfileImage(studentId, fileImagePath))
+                        {
+                            //Return image path
+                            return Ok(fileImagePath);
+                        }
+                        return StatusCode(StatusCodes.Status500InternalServerError, "Error while uploading image");
+
+
+                    }
+                }
+                return BadRequest("this is not a valid image format");
             }
+            
 
 
             return NotFound();
