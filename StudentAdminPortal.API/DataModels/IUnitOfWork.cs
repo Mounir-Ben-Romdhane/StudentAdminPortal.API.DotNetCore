@@ -6,6 +6,8 @@ namespace StudentAdminPortal.API.DataModels
     {
         IStudentRepository StudentRepository { get; }
 
+        IImageRepository ImageRepository { get; }
+
         int Complete();
         
     }

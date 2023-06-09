@@ -107,6 +107,32 @@ namespace StudentAdminPortal.API.Controllers
             return CreatedAtAction(nameof(GetStudentAsync), new { studentId = student.Id }, mapper.Map<DomainModels.Student>(student));
             
         }
-    
+
+        [HttpPost]
+        [Route("[controller]/{studentId:guid}/upload-image")]
+        public async Task<IActionResult> UploadImage([FromRoute] Guid studentId, IFormFile profileImage)
+        {
+            //Check user exist
+            if (await uow.StudentRepository.Exist(studentId))
+            {
+                //Generate file name
+                var fileName = Guid.NewGuid().ToString() + Path.GetExtension(profileImage.FileName);
+                //Upload image to local storage
+                var fileImagePath = await uow.ImageRepository.Upload(profileImage,fileName);
+                //Update profil image path to the database
+                if (await uow.StudentRepository.UpdateProfileImage(studentId, fileImagePath))
+                {
+                    //Return image path
+                    return Ok(fileImagePath);
+                }
+                return StatusCode(StatusCodes.Status500InternalServerError, "Error while uploading image");
+
+                    
+            }
+
+
+            return NotFound();
+        }
+
     }
 }
