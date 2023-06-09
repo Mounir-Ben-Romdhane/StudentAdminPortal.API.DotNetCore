@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using StudentAdminPortal.API.DataModels;
-
+using StudentAdminPortal.API.DomainModels;
 
 namespace StudentAdminPortal.API.Controllers
 {
@@ -51,6 +51,27 @@ namespace StudentAdminPortal.API.Controllers
             }
             //Return student
             return Ok(mapper.Map<DomainModels.Student>(student));
-        }   
+        }
+
+        [HttpPut]
+        [Route("[controller]/{studentId:guid}")]
+        public async Task<IActionResult> UpdateStudentAsync([FromRoute] Guid studentId, [FromBody] UpdateStudentRequet requet)
+        {
+            //Check user exist
+           if(await uow.StudentRepository.Exist(studentId))
+            {
+                //Update student
+                var updatedStudent = await uow.StudentRepository.UpdateStudentAsync(studentId, mapper.Map<DataModels.Student>(requet));
+
+                if(updatedStudent != null)
+                {
+                    //Return student
+                    return Ok(mapper.Map<DomainModels.Student>(updatedStudent));
+                }
+                
+            }
+                return NotFound();
+            
+        }
     }
 }
