@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using StudentAdminPortal.API.DataModels;
 
@@ -11,9 +12,11 @@ using StudentAdminPortal.API.DataModels;
 namespace StudentAdminPortal.API.Migrations
 {
     [DbContext(typeof(StudentAdminContext))]
-    partial class StudentAdminContextModelSnapshot : ModelSnapshot
+    [Migration("20230614145937_mssql_migration_358")]
+    partial class mssql_migration_358
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -155,12 +158,6 @@ namespace StudentAdminPortal.API.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("PasswordHashed")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("RefreshTOkenExpiryTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("RefreshToken")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid?>("RoleId")

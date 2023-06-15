@@ -12,6 +12,9 @@ namespace StudentAdminPortal.API.DataModels
         public IImageRepository ImageRepository => 
             new LocalStorageImageRepository(_context);
 
+        public IUserRepository UserRepository => 
+            new UserRepository(_context);
+
         private readonly StudentAdminContext _context;
         public UnitOfWork(StudentAdminContext context)
         {

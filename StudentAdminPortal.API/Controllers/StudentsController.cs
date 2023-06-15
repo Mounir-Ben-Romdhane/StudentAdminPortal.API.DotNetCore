@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StudentAdminPortal.API.DataModels;
 using StudentAdminPortal.API.DomainModels;
@@ -30,6 +31,7 @@ namespace StudentAdminPortal.API.Controllers
 
         [HttpGet]
         [Route("[controller]")]
+        [Authorize]
         public async Task<IActionResult> GetAllStudents()
         {
             var students = await uow.StudentRepository.GetStudentsAsync();
