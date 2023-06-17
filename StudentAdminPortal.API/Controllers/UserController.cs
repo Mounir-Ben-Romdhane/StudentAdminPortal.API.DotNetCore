@@ -38,7 +38,7 @@ namespace StudentAdminPortal.API.Controllers
         [Route("/Claims")]
         public async Task<IActionResult> GetAllClaims(Guid roleId)
         {
-            var claims = await uow.UserRepository.GetAllLaims(roleId);
+            var claims = await uow.UserRepository.GetAllCLaims(roleId);
 
             if (claims == null)
             {
@@ -145,5 +145,93 @@ namespace StudentAdminPortal.API.Controllers
 
         }
 
+        [HttpGet]
+        [Route("/Users/{userId:int}")]
+        public async Task<IActionResult> GetUser(int userId)
+        {
+            var user = await uow.UserRepository.GetUserAsync(userId);
+            var claims = await uow.UserRepository.GetAllCLaims(user.RoleId);
+
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            var userDto = new UserDto()
+            {
+                Id = user.Id,
+                UserName = user.Username,
+                Email = user.Email,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                RoleId = user.RoleId,
+                Password = user.Password
+            };
+
+            return Ok(userDto);
+        }
+
+        [HttpPut]
+        [Route("/Users/{userId:int}")]
+        public async Task<IActionResult> UpdateUser([FromRoute] int userId,
+            [FromBody] UpdateUserRequest request)
+        {
+            //Check user exist
+            if(await uow.UserRepository.ExistUser(userId)){
+                //Update user
+                var updateUser = await uow.UserRepository.UpdateUserAsync(userId,request);
+                if(updateUser != null)
+                {
+                    return Ok(updateUser);
+                }
+            }
+            return NotFound();
+        }
+
+        [HttpPost]
+        [Route("/Users/Add")]
+        public async Task<IActionResult> AddUser([FromBody] User request)
+        {
+            if(request == null)
+            {
+                return NotFound();
+            }            
+            var pass = uow.UserRepository.CheckPasswordStrengthAsync(request.Password);
+            if (await uow.UserRepository.CheckUserNameExistAsync(request.Username))
+            {
+                return BadRequest("UserName already exists");
+            }
+            else if (await uow.UserRepository.CheckEmailExistAsync(request.Email))
+            {
+                return BadRequest("Email already exists");
+            }
+            else if (!string.IsNullOrEmpty(pass))
+            {
+                return BadRequest(pass);
+            }
+            else
+            {
+                await uow.UserRepository.AddUserAsync(request);
+
+                return Ok(new { Message = "User added successfully !!" });
+            }
+        }
+
+        [HttpDelete]
+        [Route("/Users/{userId:int}")]
+        public async Task<IActionResult> DeleteUser([FromRoute] int userId)
+        {
+            //Check user exist
+            if (await uow.UserRepository.ExistUser(userId))
+            {
+                //Delete user
+                var deleteUser = await uow.UserRepository.DeleteUserAsync(userId);
+                if (deleteUser != null)
+                {
+                    return Ok(deleteUser);
+                }
+            }
+            return NotFound();
+        }
     }
 }

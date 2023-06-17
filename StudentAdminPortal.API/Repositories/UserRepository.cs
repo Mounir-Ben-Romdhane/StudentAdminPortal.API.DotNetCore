@@ -40,7 +40,7 @@ namespace StudentAdminPortal.API.Repositories
         public async Task<User>  RegisterUser(User request)
         {
             request.PasswordHashed = PasswordHacher.HashPassword(request.Password);
-            request.RoleId = Guid.Parse("04FEA886-46CB-4A6F-86C1-B6B504AF4BA8");
+            request.RoleId = Guid.Parse("6AB6245F-68DF-4927-9FE4-E9FFCED547D0");
             request.Token = "";
             var user = await context.Users.AddAsync(request);
             await context.SaveChangesAsync();
@@ -69,16 +69,12 @@ namespace StudentAdminPortal.API.Repositories
 
         public string CreateJwtToken(User user)
         {
-            var rolesWithClaims = context.Roles.Include(r => r.claims).ToList();
-            List<string> claimsNames = new List<string>();
             
-            foreach (var claim in rolesWithClaims)
-            {
-                foreach (var claimName in claim.claims)
-                {
-                    claimsNames.Add(claimName.claimName);
-                }
-            }
+            
+            List<string> claimsNames = new List<string>();
+            claimsNames = context.Claims.Where(x => x.RoleId == user.RoleId).
+            Select(x => x.claimName).
+            ToList();
             
             string jsonList = JsonConvert.SerializeObject(claimsNames);
 
@@ -154,7 +150,7 @@ namespace StudentAdminPortal.API.Repositories
             return await context.Roles.Include(r => r.claims).ToListAsync();
         }
 
-        public async Task<string> GetAllLaims(Guid roleId)
+        public async Task<string> GetAllCLaims(Guid roleId)
         {
             List<string> list = new List<string>();
             list = context.Claims.Where(x => x.RoleId == roleId).
@@ -162,6 +158,61 @@ namespace StudentAdminPortal.API.Repositories
             ToList();
             string jsonList = JsonConvert.SerializeObject(list);
             return jsonList;
+        }
+
+        public async Task<User> GetUserAsync(int userId)
+        {
+           return await context.Users
+                .FirstOrDefaultAsync(u => u.Id == userId);
+        }
+
+        public async Task<User> UpdateUserAsync(int userId, UpdateUserRequest request)
+        {
+            var existingUser = await GetUserAsync(userId);
+            if(existingUser != null)
+            {
+                existingUser.FirstName = request.FirstName;
+                existingUser.LastName = request.LastName;
+                existingUser.Username = request.Username;
+                existingUser.Email = request.Email;
+                existingUser.Password = existingUser.Password;
+                existingUser.PasswordHashed = existingUser.PasswordHashed;
+                existingUser.RoleId = request.RoleId;
+                existingUser.Token = existingUser.Token;
+                existingUser.RefreshToken = existingUser.RefreshToken;
+                existingUser.RefreshTOkenExpiryTime = existingUser.RefreshTOkenExpiryTime;
+                
+                await context.SaveChangesAsync();
+                return existingUser;
+            }
+            return null;
+        }
+
+        public async Task<User> DeleteUserAsync(int userId)
+        {
+            var user = await GetUserAsync(userId);
+            if(user != null)
+            {
+                context.Users.Remove(user);
+                await context.SaveChangesAsync();
+                return user;
+            }
+            return null;
+        }
+
+        public async Task<User> AddUserAsync(User request)
+        {
+            request.PasswordHashed = PasswordHacher.HashPassword(request.Password);
+            request.RoleId = request.RoleId;
+            request.Token = "";
+            var user = await context.Users.AddAsync(request);
+            await context.SaveChangesAsync();
+            return user.Entity;
+        }
+
+        public async Task<bool> ExistUser(int userId)
+        {
+            return await context.Users.AnyAsync(u => u.Id == userId);
         }
     }
 }

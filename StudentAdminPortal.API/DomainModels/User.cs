@@ -13,7 +13,7 @@ namespace StudentAdminPortal.API.DomainModels
         public string? Password { get; set; }
         public string? PasswordHashed { get; set; }
         public string? Token { get; set; }
-        public Guid? RoleId { get; set; }
+        public Guid RoleId { get; set; }
         public Role? Role { get; set; }
 
         public string? RefreshToken { get; set; }
