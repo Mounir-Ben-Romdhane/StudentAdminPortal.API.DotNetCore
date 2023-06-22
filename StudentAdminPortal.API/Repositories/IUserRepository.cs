@@ -25,5 +25,12 @@ namespace StudentAdminPortal.API.Repositories
         string CreateRefreshToken();
         Task<User> RefreshToken(TokenApiDto tokenApiDto);
         ClaimsPrincipal GetPrincipaleFromExpireToken(string token);
+
+        Task<User> GetUserByEmail(string email);
+
+        Task SendEmail( User user);
+        Task<User> GetUserByEmailToken(string emailToken);
+
+        Task SendResetEmail(User user);
     }
 }

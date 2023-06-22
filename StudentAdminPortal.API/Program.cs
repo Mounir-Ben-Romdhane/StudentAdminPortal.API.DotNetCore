@@ -3,8 +3,11 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using StudentAdminPortal.API.DataModels;
+using StudentAdminPortal.API.DomainModels;
 using StudentAdminPortal.API.Repositories;
+using StudentAdminPortal.API.UtilityService;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -50,9 +53,28 @@ builder.Services.AddScoped<IStudentRepository, SqlStudentRepository>();
 builder.Services.AddScoped<IImageRepository, LocalStorageImageRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddTransient<IEmailService, EmailService>();
+
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo
+    { 
+        Title = "StudentAdminPortal.API", 
+        Version = "v1" ,
+        Description = "This is a Web API for Student Admin Portal",
+        Contact = new OpenApiContact
+        {
+            Name = "Mounir BRM",
+            Email = "example@example.com",
+            Url = new Uri("https://example.com/contact")
+        },
+    });
+});
+
 builder.Services.AddAutoMapper(typeof(Program).Assembly);
+
+builder.Services.Configure<MailSettings>(builder.Configuration.GetSection("MailSettings"));
 
 var app = builder.Build();
 
@@ -60,7 +82,10 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "v1");
+    });
 }
 
 app.UseHttpsRedirection();

@@ -5,6 +5,7 @@ using StudentAdminPortal.API.DataModels;
 using StudentAdminPortal.API.DomainModels;
 using StudentAdminPortal.API.DomainModels.Dto;
 using StudentAdminPortal.API.Helpers;
+using StudentAdminPortal.API.UtilityService;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data.Entity.Core.Common.CommandTrees.ExpressionBuilder;
@@ -20,9 +21,15 @@ namespace StudentAdminPortal.API.Repositories
     {
 
         private readonly StudentAdminContext context;
-        public UserRepository(StudentAdminContext context)
+        private readonly IConfiguration _configuration;
+        private readonly IEmailService _emailService;
+        public UserRepository(StudentAdminContext context
+            , IConfiguration configuration,
+            IEmailService emailService)
         {
             this.context = context;
+            this._configuration = configuration;
+            this._emailService = emailService;
         }
 
 
@@ -213,6 +220,31 @@ namespace StudentAdminPortal.API.Repositories
         public async Task<bool> ExistUser(int userId)
         {
             return await context.Users.AnyAsync(u => u.Id == userId);
+        }
+
+        public async Task<User> GetUserByEmail(string email)
+        {
+            return await context.Users.FirstOrDefaultAsync(u => u.Email == email);
+        }
+
+        public async Task SendEmail( User user)
+        {
+            
+
+            
+            context.Entry(user).State = EntityState.Modified;
+            await context.SaveChangesAsync();
+        }
+
+        public async Task<User> GetUserByEmailToken(string emailToken)
+        {
+            return await context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Email == emailToken);
+        }
+
+        public async Task SendResetEmail(User user)
+        {
+            context.Entry(user).State = EntityState.Modified;
+            await context.SaveChangesAsync();
         }
     }
 }

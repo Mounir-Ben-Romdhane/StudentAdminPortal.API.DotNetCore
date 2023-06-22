@@ -8,6 +8,9 @@ using StudentAdminPortal.API.DataModels;
 using StudentAdminPortal.API.DomainModels;
 using StudentAdminPortal.API.DomainModels.Dto;
 using StudentAdminPortal.API.Helpers;
+using StudentAdminPortal.API.UtilityService;
+using System.Configuration;
+using System.Security.Cryptography;
 
 namespace StudentAdminPortal.API.Controllers
 {
@@ -17,10 +20,16 @@ namespace StudentAdminPortal.API.Controllers
     public class UserController : ControllerBase
     {
         private readonly IUnitOfWork uow;
+        private readonly IConfiguration _configuration;
+        private readonly IEmailService _emailService;
 
-        public UserController(IUnitOfWork uow)
+        public UserController(IUnitOfWork uow,
+            IConfiguration configuration,
+            IEmailService emailService)
         {
             this.uow = uow;
+            _configuration = configuration;
+            _emailService = emailService;
         }
 
         [HttpGet]
@@ -232,6 +241,90 @@ namespace StudentAdminPortal.API.Controllers
                 }
             }
             return NotFound();
+        }
+
+        [HttpPost]
+        [Route("/send-mail")]
+        public async Task<IActionResult> SendMail(MailData mailData)
+        {
+             _emailService.SendMail(mailData);
+            return Ok(new
+            {
+                StatusCode = 200,
+                Message = "Reset password link has been sent to your email"
+            });
+
+        }
+
+        [HttpPost("send-reset-email/{email}")]
+        public async Task<IActionResult> SendEmail(string email)
+        {
+            var user = await uow.UserRepository.GetUserByEmail(email);
+            if (user is null)
+            {
+                return NotFound(new
+                {
+                    StatusCode = 404,
+                    Message = "User not found"
+                });
+            }
+
+            var tokenBytes = RandomNumberGenerator.GetBytes(64);
+            var emailToken = Convert.ToBase64String(tokenBytes);
+            user.ResetPasswordToken = emailToken;
+            user.ResetPasswordExpiry = DateTime.Now.AddMinutes(15);
+
+            string from = _configuration["EmailSettings:From"];
+            var emailModel = new EmailModel(
+                email,
+                "Reset Password",
+                EmailBody.EmailStringBody(email, emailToken));
+             _emailService.SendEmail(emailModel);
+
+            await uow.UserRepository.SendEmail(user);
+
+
+            return Ok(new
+            {
+                StatusCode = 200,
+                Message = "Reset password link has been sent to your email"
+            });
+
+        }
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword(ResetPasswordDto resetPasswordDto)
+        {
+            var newToken = resetPasswordDto.EmailToken.Replace(' ', '+');
+            var user = await uow.UserRepository.GetUserByEmailToken(resetPasswordDto.Email);
+            if (user == null)
+            {
+                return NotFound(new
+                {
+                    StatusCode = 404,
+                    Message = "User not found"
+                });
+            }
+            var tokenCode = user.ResetPasswordToken;
+            DateTime emailTokenExpiry = user.ResetPasswordExpiry;
+
+            if(tokenCode != resetPasswordDto.EmailToken || emailTokenExpiry < DateTime.Now)
+            {
+                return BadRequest(new
+                {
+                    StatusCode = 400,
+                    Message = "Invalid Reser link"
+                });
+            }
+            user.Password = resetPasswordDto.NewPassword;
+            user.PasswordHashed = PasswordHacher.HashPassword(resetPasswordDto.NewPassword);
+            
+            await uow.UserRepository.SendResetEmail(user);
+            return Ok(new
+            {
+                StatusCode = 200,
+                Message = "Password reset successfully"
+            });
         }
     }
 }
